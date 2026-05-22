@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Riven Cipher — Warframe Riven Guesser</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="Riven%20Cipher%20%E2%80%94%20Warframe%20Riven%20Guesser_files/css2.css" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   :root{
@@ -212,13 +212,36 @@
   <div class="timer-wrap" id="timer-wrap">
     <div class="timer-row">
       <span class="timer-label">Speed</span>
-      <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
-      <span class="timer-val" id="timer-val">10.0s</span>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width: 16.41%; background: var(--c-neg);"></div></div>
+      <span class="timer-val" id="timer-val" style="color: var(--c-neg);">1.6s</span>
     </div>
   </div>
 
-  <div class="progress-row" id="progress-row"></div>
-  <main class="main" id="main"></main>
+  <div class="progress-row" id="progress-row"><div class="pdot current"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
+  <main class="main" id="main">
+    <div class="mod-card">
+    <div class="mod-card-header">
+      <div class="weapon-info">
+        <div class="weapon-type-badge">Bow</div>
+        <div class="weapon-name">Kuva Bramma</div>
+        <div class="mod-name">Bramma-Visi-Crita-Can</div>
+      </div>
+      <div class="polarity-wrap">
+        <div class="polarity-badge">V</div>
+        <div class="dispo-bar"><div class="dispo-pip on"></div><div class="dispo-pip "></div><div class="dispo-pip "></div><div class="dispo-pip "></div><div class="dispo-pip "></div></div>
+      </div>
+    </div>
+    <div class="rank-row"><div class="rank-dot on"></div><div class="rank-dot on"></div><div class="rank-dot on"></div><div class="rank-dot on"></div><div class="rank-dot on"></div><div class="rank-dot on"></div><div class="rank-dot on"></div><div class="rank-dot on"></div></div>
+    <div class="stat-slots"><div class="stat-row"><div class="stat-sign pos">+</div><div class="stat-pill hidden-anim"></div></div><div class="stat-row"><div class="stat-sign pos">+</div><div class="stat-pill hidden-anim"></div></div><div class="stat-row"><div class="stat-sign pos">+</div><div class="stat-pill hidden-anim"></div></div><div class="stat-row"><div class="stat-sign unk">?</div><div class="stat-pill unknown"><span class="neg-hint">negative — not encoded in name</span></div></div></div>
+  </div>
+    <div class="q-area">
+      <div class="q-label">Identify stat 1 of 3 — Base token 1</div>
+      <div class="name-hint"><div class="nh-row"><div class="nh-token"><span class="nh-word ">Bramma</span><span class="nh-role ">weapon</span></div><span class="nh-sep">-</span><div class="nh-token"><span class="nh-word asking">Visi</span><span class="nh-role asking">base</span></div><span class="nh-sep">-</span><div class="nh-token"><span class="nh-word ">Crita</span><span class="nh-role ">base</span></div><span class="nh-sep">-</span><div class="nh-token"><span class="nh-word ">Can</span><span class="nh-role ">end</span></div></div></div>
+      <div class="q-prompt">What does this token encode?</div>
+      <div class="speed-flash" id="speed-flash"></div>
+      <div class="options-grid"><button class="opt-btn" data-opt="Damage to Corpus" onclick="handleAnswer('Damage to Corpus','Base Damage')">Damage to Corpus</button><button class="opt-btn" data-opt="Base Damage" onclick="handleAnswer('Base Damage','Base Damage')">Base Damage</button><button class="opt-btn" data-opt="Toxin Damage" onclick="handleAnswer('Toxin Damage','Base Damage')">Toxin Damage</button><button class="opt-btn" data-opt="Puncture Damage" onclick="handleAnswer('Puncture Damage','Base Damage')">Puncture Damage</button></div>
+      <div class="feedback" id="feedback"></div>
+    </div></main>
 </div>
 
 <!-- LEADERBOARD TAB -->
@@ -238,7 +261,12 @@
 <!-- AUX (legend) always visible -->
 <div class="aux-wrap" id="aux-wrap">
   <button class="legend-toggle" onclick="document.getElementById('lgp').classList.toggle('open')">⊞ Token Reference</button>
-  <div class="legend-panel" id="lgp"></div>
+  <div class="legend-panel" id="lgp">
+    <div class="legend-section-title" style="margin-bottom:.5rem">Base tokens (stats 1 &amp; 2)</div>
+    <div class="legend-cols"><div class="legend-row"><span class="legend-token">Ampi</span><span class="legend-stat">Ammo Maximum</span></div><div class="legend-row"><span class="legend-token">Manti</span><span class="legend-stat">Damage to Corpus</span></div><div class="legend-row"><span class="legend-token">Argi</span><span class="legend-stat">Damage to Grineer</span></div><div class="legend-row"><span class="legend-token">Pura</span><span class="legend-stat">Damage to Infested</span></div><div class="legend-row"><span class="legend-token">Geli</span><span class="legend-stat">Cold Damage</span></div><div class="legend-row"><span class="legend-token">Crita</span><span class="legend-stat">Critical Chance</span></div><div class="legend-row"><span class="legend-token">Acri</span><span class="legend-stat">Critical Damage</span></div><div class="legend-row"><span class="legend-token">Visi</span><span class="legend-stat">Base Damage</span></div><div class="legend-row"><span class="legend-token">Vexi</span><span class="legend-stat">Electricity Damage</span></div><div class="legend-row"><span class="legend-token">Igni</span><span class="legend-stat">Heat Damage</span></div><div class="legend-row"><span class="legend-token">Croni</span><span class="legend-stat">Fire Rate <span style="color:var(--c-muted);font-size:10px">/ Attack Speed</span></span></div><div class="legend-row"><span class="legend-token">Conci</span><span class="legend-stat">Projectile Flight Speed</span></div><div class="legend-row"><span class="legend-token">Magna</span><span class="legend-stat">Impact Damage</span></div><div class="legend-row"><span class="legend-token">Arma</span><span class="legend-stat">Magazine Capacity</span></div><div class="legend-row"><span class="legend-token">Sati</span><span class="legend-stat">Multishot</span></div><div class="legend-row"><span class="legend-token">Toxi</span><span class="legend-stat">Toxin Damage</span></div><div class="legend-row"><span class="legend-token">Lexi</span><span class="legend-stat">Punch Through</span></div><div class="legend-row"><span class="legend-token">Insi</span><span class="legend-stat">Puncture Damage</span></div><div class="legend-row"><span class="legend-token">Feva</span><span class="legend-stat">Reload Speed</span></div><div class="legend-row"><span class="legend-token">Sci</span><span class="legend-stat">Slash Damage</span></div><div class="legend-row"><span class="legend-token">Hexa</span><span class="legend-stat">Status Chance</span></div><div class="legend-row"><span class="legend-token">Deci</span><span class="legend-stat">Status Duration</span></div><div class="legend-row"><span class="legend-token">Zeti</span><span class="legend-stat">Weapon Recoil</span></div><div class="legend-row"><span class="legend-token">Hera</span><span class="legend-stat">Zoom</span></div><div class="legend-row"><span class="legend-token">Croni</span><span class="legend-stat">Combo Duration</span></div><div class="legend-row"><span class="legend-token">Exi</span><span class="legend-stat">Initial Combo</span></div><div class="legend-row"><span class="legend-token">Locti</span><span class="legend-stat">Melee Range</span></div><div class="legend-row"><span class="legend-token">Exi</span><span class="legend-stat">Finisher Damage</span></div><div class="legend-row"><span class="legend-token">Tempi</span><span class="legend-stat">Heavy Attack Efficiency</span></div><div class="legend-row"><span class="legend-token">Noxi</span><span class="legend-stat">Heavy Attack Wind Up</span></div><div class="legend-row"><span class="legend-token">Pleci</span><span class="legend-stat">Slide Critical Chance</span></div></div>
+    <div style="height:1rem"></div>
+    <div class="legend-section-title" style="margin-bottom:.5rem">End tokens (stat 3)</div>
+    <div class="legend-cols"><div class="legend-row"><span class="legend-token">Bin</span><span class="legend-stat">Ammo Maximum</span></div><div class="legend-row"><span class="legend-token">Tron</span><span class="legend-stat">Damage to Corpus</span></div><div class="legend-row"><span class="legend-token">Con</span><span class="legend-stat">Damage to Grineer</span></div><div class="legend-row"><span class="legend-token">Ada</span><span class="legend-stat">Damage to Infested</span></div><div class="legend-row"><span class="legend-token">Do</span><span class="legend-stat">Cold Damage</span></div><div class="legend-row"><span class="legend-token">Cron</span><span class="legend-stat">Critical Chance</span></div><div class="legend-row"><span class="legend-token">Tis</span><span class="legend-stat">Critical Damage</span></div><div class="legend-row"><span class="legend-token">Ata</span><span class="legend-stat">Base Damage</span></div><div class="legend-row"><span class="legend-token">Tio</span><span class="legend-stat">Electricity Damage</span></div><div class="legend-row"><span class="legend-token">Pha</span><span class="legend-stat">Heat Damage</span></div><div class="legend-row"><span class="legend-token">Dra</span><span class="legend-stat">Fire Rate <span style="color:var(--c-muted);font-size:10px">/ Attack Speed</span></span></div><div class="legend-row"><span class="legend-token">Nak</span><span class="legend-stat">Projectile Flight Speed</span></div><div class="legend-row"><span class="legend-token">Ton</span><span class="legend-stat">Impact Damage</span></div><div class="legend-row"><span class="legend-token">Tin</span><span class="legend-stat">Magazine Capacity</span></div><div class="legend-row"><span class="legend-token">Can</span><span class="legend-stat">Multishot</span></div><div class="legend-row"><span class="legend-token">Tox</span><span class="legend-stat">Toxin Damage</span></div><div class="legend-row"><span class="legend-token">Nok</span><span class="legend-stat">Punch Through</span></div><div class="legend-row"><span class="legend-token">Cak</span><span class="legend-stat">Puncture Damage</span></div><div class="legend-row"><span class="legend-token">Tak</span><span class="legend-stat">Reload Speed</span></div><div class="legend-row"><span class="legend-token">Sus</span><span class="legend-stat">Slash Damage</span></div><div class="legend-row"><span class="legend-token">Dex</span><span class="legend-stat">Status Chance</span></div><div class="legend-row"><span class="legend-token">Des</span><span class="legend-stat">Status Duration</span></div><div class="legend-row"><span class="legend-token">Mag</span><span class="legend-stat">Weapon Recoil</span></div><div class="legend-row"><span class="legend-token">Lis</span><span class="legend-stat">Zoom</span></div><div class="legend-row"><span class="legend-token">Dra</span><span class="legend-stat">Combo Duration</span></div><div class="legend-row"><span class="legend-token">Ion</span><span class="legend-stat">Initial Combo</span></div><div class="legend-row"><span class="legend-token">Tin</span><span class="legend-stat">Melee Range</span></div><div class="legend-row"><span class="legend-token">Dex</span><span class="legend-stat">Finisher Damage</span></div><div class="legend-row"><span class="legend-token">Nem</span><span class="legend-stat">Heavy Attack Efficiency</span></div><div class="legend-row"><span class="legend-token">Lis</span><span class="legend-stat">Heavy Attack Wind Up</span></div><div class="legend-row"><span class="legend-token">Dex</span><span class="legend-stat">Slide Critical Chance</span></div></div></div>
 </div>
 
 <script>
@@ -597,7 +625,7 @@ function showResults(){
 
 // ── Supabase config ───────────────────────────────────────────
 const SB_URL = 'https://lpkpbmkfkggjrvbbsivl.supabase.co';
-const SB_KEY = 'sb_publishable_XPGmnADLTflg5Ydd8h7taQ_Q-hZka3K';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwa3BibWtma2dnanJ2YmJzaXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MTgzMzAsImV4cCI6MjA5NDk5NDMzMH0.eY-AEKBpb9DJq5juog3kywQoiZnObe0_Ac_y69KDI10';
 
 async function sbFetch(path, opts={}){
   const res = await fetch(SB_URL+'/rest/v1/'+path, {
@@ -772,5 +800,6 @@ function switchTab(tab){
 
 initGame();
 </script>
-</body>
-</html>
+
+
+</body></html>
