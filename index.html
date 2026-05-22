@@ -1,4 +1,1117 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riven Cipher — Warframe Riven Guesser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --c-bg:#07090e;--c-surface:#0d1118;--c-surface2:#111720;
+  --c-border:#1a2535;--c-border2:#243040;
+  --c-text:#b8c8e0;--c-muted:#445566;
+  --c-accent:#00b4ff;--c-gold:#f0a020;
+  --c-pos:#3af;--c-neg:#f64;--c-ok:#0ef0a0;
+  --c-purple:#a060ff;
+}
+html,body{min-height:100vh;background:var(--c-bg);font-family:'Rajdhani',sans-serif;color:var(--c-text);}
+body{display:flex;flex-direction:column;align-items:center;padding:0 0 4rem;}
+
+/* ── Shared ── */
+.page{width:100%;display:flex;flex-direction:column;align-items:center;}
+.hidden{display:none!important;}
+.w{max-width:580px;width:calc(100% - 3rem);}
+
+/* ── Header ── */
+.site-header{width:100%;max-width:580px;padding:2.5rem 1.5rem 0;text-align:center;}
+.site-title{font-family:'Orbitron',monospace;font-size:clamp(22px,5vw,30px);font-weight:900;letter-spacing:6px;color:var(--c-accent);text-transform:uppercase;display:inline-block;}
+.site-title::after{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,var(--c-accent),transparent);margin-top:6px;opacity:.5;}
+.site-sub{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--c-muted);margin-top:8px;}
+
+/* ══════════════════════════════
+   START PAGE
+══════════════════════════════ */
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:1.5rem 0;}
+.diff-card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:1rem 1.1rem;cursor:pointer;transition:border-color .15s,background .15s;position:relative;overflow:hidden;}
+.diff-card:hover{border-color:var(--c-accent);background:var(--c-surface2);}
+.diff-card.daily{grid-column:1/-1;border-color:#3a2060;}
+.diff-card.daily:hover{border-color:var(--c-purple);}
+.diff-card .dc-name{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
+.diff-card .dc-timer{font-size:11px;color:var(--c-muted);letter-spacing:1px;}
+.diff-card .dc-best{font-size:11px;letter-spacing:1px;margin-top:6px;}
+.diff-card .dc-best span{font-family:'Orbitron',monospace;font-size:12px;}
+.diff-card.practice .dc-name{color:#4af;}
+.diff-card.easy .dc-name{color:var(--c-ok);}
+.diff-card.medium .dc-name{color:var(--c-gold);}
+.diff-card.hard .dc-name{color:var(--c-neg);}
+.diff-card.impossible .dc-name{color:var(--c-purple);}
+.diff-card.daily .dc-name{color:var(--c-purple);}
+.diff-card .dc-done-badge{position:absolute;top:8px;right:8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(160,96,255,.15);color:var(--c-purple);border:1px solid #3a2060;border-radius:3px;padding:2px 6px;}
+
+.records-section{margin-bottom:1.5rem;}
+.records-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);margin-bottom:.6rem;}
+.rec-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.rec-cell{background:var(--c-surface);border:1px solid var(--c-border);border-radius:6px;padding:8px 6px;text-align:center;}
+.rec-cell .rv{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--c-gold);line-height:1;}
+.rec-cell .rl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--c-muted);margin-top:3px;}
+
+/* ══════════════════════════════
+   GAME PAGE
+══════════════════════════════ */
+.mode-badge{display:inline-block;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:3px 10px;border-radius:3px;margin:1rem 0 0;}
+.mode-badge.practice{background:rgba(64,170,255,.1);color:#4af;border:1px solid rgba(64,170,255,.3);}
+.mode-badge.easy{background:rgba(14,240,160,.1);color:var(--c-ok);border:1px solid rgba(14,240,160,.3);}
+.mode-badge.medium{background:rgba(240,160,32,.1);color:var(--c-gold);border:1px solid rgba(240,160,32,.3);}
+.mode-badge.hard{background:rgba(255,100,40,.1);color:var(--c-neg);border:1px solid rgba(255,100,40,.3);}
+.mode-badge.impossible{background:rgba(160,96,255,.1);color:var(--c-purple);border:1px solid rgba(160,96,255,.3);}
+.mode-badge.daily{background:rgba(160,96,255,.1);color:var(--c-purple);border:1px solid rgba(160,96,255,.3);}
+
+.stats-bar{display:flex;gap:1px;background:var(--c-border);border:1px solid var(--c-border);border-radius:8px;overflow:hidden;max-width:580px;width:calc(100% - 3rem);margin:.75rem auto 0;}
+.stat-cell{flex:1;background:var(--c-surface);padding:10px 8px;text-align:center;}
+.stat-cell .val{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:var(--c-accent);line-height:1;}
+.stat-cell .lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);margin-top:3px;}
+
+.timer-wrap{max-width:580px;width:calc(100% - 3rem);margin:.6rem auto 0;}
+.timer-row{display:flex;align-items:center;gap:10px;}
+.timer-val{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;min-width:48px;text-align:right;}
+.timer-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);}
+.timer-track{flex:1;height:4px;background:var(--c-surface2);border-radius:2px;overflow:hidden;}
+.timer-fill{height:100%;border-radius:2px;transition:width .1s linear,background .3s;}
+
+.progress-row{display:flex;justify-content:center;gap:5px;margin:.6rem auto 0;max-width:580px;width:calc(100% - 3rem);}
+.pdot{flex:1;height:4px;border-radius:2px;background:var(--c-surface2);border:1px solid var(--c-border);transition:background .3s,box-shadow .3s;}
+.pdot.current{background:var(--c-accent);box-shadow:0 0 8px rgba(0,180,255,.6);}
+.pdot.done-correct{background:var(--c-ok);}
+.pdot.done-wrong{background:var(--c-neg);}
+
+.main{max-width:580px;width:calc(100% - 3rem);margin:1.1rem auto 0;}
+
+/* Mod card */
+.mod-card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;padding:1.25rem 1.25rem 1rem;position:relative;overflow:hidden;margin-bottom:1.1rem;}
+.mod-card::before{content:'';position:absolute;inset:0;border-radius:12px;border-top:2px solid transparent;background:linear-gradient(var(--c-surface),var(--c-surface)) padding-box,linear-gradient(90deg,transparent 10%,var(--c-accent) 50%,transparent 90%) border-box;pointer-events:none;}
+.mod-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem;}
+.weapon-info{flex:1;}
+.weapon-type-badge{display:inline-block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);border:1px solid var(--c-border);border-radius:3px;padding:1px 6px;margin-bottom:4px;}
+.weapon-name{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:#e0eaff;letter-spacing:1px;}
+.mod-name{font-size:11px;letter-spacing:2px;color:var(--c-accent);text-transform:uppercase;margin-top:3px;opacity:.8;}
+.mod-name.hidden-name{opacity:.3;letter-spacing:1px;color:var(--c-muted);}
+.polarity-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.polarity-badge{width:38px;height:38px;border:1px solid var(--c-border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:15px;color:var(--c-accent);background:var(--c-surface2);}
+.dispo-bar{display:flex;gap:2px;}
+.dispo-pip{width:6px;height:6px;border-radius:50%;background:var(--c-border2);border:1px solid var(--c-border);}
+.dispo-pip.on{background:var(--c-gold);border-color:var(--c-gold);}
+.rank-row{display:flex;gap:4px;margin-bottom:1rem;}
+.rank-dot{width:7px;height:7px;border-radius:50%;background:var(--c-border2);border:1px solid var(--c-border);}
+.rank-dot.on{background:var(--c-gold);border-color:var(--c-gold);box-shadow:0 0 5px rgba(240,160,0,.5);}
+.stat-slots{border-top:1px solid var(--c-border);padding-top:.75rem;}
+.stat-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.stat-sign{width:24px;height:24px;border-radius:4px;border:1px solid var(--c-border);background:var(--c-surface2);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;flex-shrink:0;}
+.stat-sign.pos{color:var(--c-pos);border-color:#1a3a55;}
+.stat-sign.unk{color:var(--c-muted);}
+.stat-pill{flex:1;height:30px;border-radius:5px;border:1px solid var(--c-border);background:var(--c-surface2);display:flex;align-items:center;padding:0 10px;font-size:13px;font-weight:600;letter-spacing:.5px;color:#333d4d;overflow:hidden;}
+.stat-pill.hidden-anim{background:repeating-linear-gradient(90deg,var(--c-surface2) 0,var(--c-surface2) 6px,var(--c-border) 6px,var(--c-border) 7px);background-size:14px 100%;animation:scan 3s linear infinite;}
+@keyframes scan{from{background-position:0 0}to{background-position:280px 0}}
+.stat-pill.revealed.pos{color:var(--c-pos);border-color:#1a3a55;background:#06131f;}
+.stat-pill.revealed.neg{color:var(--c-neg);border-color:#40200a;background:#180a02;}
+.stat-pill.unknown{color:var(--c-muted);font-style:italic;font-size:12px;}
+.neg-hint{font-size:10px;letter-spacing:1px;color:var(--c-muted);font-style:italic;}
+
+/* Question area - MC */
+.q-area{margin-top:0;}
+.q-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);text-align:center;margin-bottom:.6rem;}
+.name-hint{text-align:center;margin-bottom:1rem;padding:10px 14px;background:var(--c-surface2);border:1px solid var(--c-border);border-radius:6px;}
+.nh-row{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;}
+.nh-sep{color:var(--c-muted);font-size:14px;}
+.nh-token{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.nh-word{font-family:'Orbitron',monospace;font-size:13px;color:#e0eaff;letter-spacing:1px;}
+.nh-word.asking{color:var(--c-accent);border-bottom:1px solid var(--c-accent);}
+.nh-word.answered{color:var(--c-ok);}
+.nh-role{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--c-muted);}
+.nh-role.asking{color:var(--c-accent);}
+.q-prompt{text-align:center;font-family:'Orbitron',monospace;font-size:13px;color:#e0eaff;letter-spacing:1px;margin-bottom:1rem;}
+.speed-flash{text-align:center;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:var(--c-gold);min-height:16px;margin-bottom:4px;}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:1rem;}
+.opt-btn{background:var(--c-surface2);border:1px solid var(--c-border2);border-radius:6px;padding:9px 12px;color:#8898b0;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.5px;transition:border-color .12s,background .12s,color .12s,transform .1s;text-align:center;line-height:1.3;}
+.opt-btn:hover:not(:disabled){border-color:var(--c-accent);color:var(--c-accent);background:rgba(0,180,255,.06);}
+.opt-btn:active:not(:disabled){transform:scale(.97);}
+.opt-btn.correct-ans{border-color:var(--c-ok)!important;color:var(--c-ok)!important;background:rgba(0,240,160,.07)!important;}
+.opt-btn.wrong-ans{border-color:var(--c-neg)!important;color:var(--c-neg)!important;background:rgba(255,100,40,.07)!important;}
+.opt-btn:disabled{cursor:default;opacity:.7;}
+
+/* Impossible mode type input */
+.imp-area{margin-top:0;}
+.imp-slots{display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;}
+.imp-slot{display:flex;align-items:center;gap:8px;}
+.imp-slot-num{font-family:'Orbitron',monospace;font-size:11px;color:var(--c-muted);min-width:18px;}
+.imp-input{flex:1;background:var(--c-surface2);border:1px solid var(--c-border2);border-radius:5px;padding:8px 12px;color:var(--c-text);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;letter-spacing:.5px;outline:none;transition:border-color .12s;}
+.imp-input:focus{border-color:var(--c-accent);}
+.imp-input::placeholder{color:var(--c-muted);}
+.imp-input.correct{border-color:var(--c-ok)!important;color:var(--c-ok)!important;background:#06131f!important;}
+.imp-input.wrong{border-color:var(--c-neg)!important;color:var(--c-neg)!important;background:#180800!important;}
+.imp-input.revealed{border-color:#1a3a55;color:var(--c-pos);background:#06131f;font-style:italic;}
+.imp-input:disabled{cursor:default;}
+.imp-hint{font-size:11px;color:var(--c-muted);text-align:center;letter-spacing:.5px;margin-bottom:.75rem;}
+.imp-submit{display:block;width:100%;background:transparent;border:1px solid var(--c-purple);border-radius:6px;padding:11px;color:var(--c-purple);font-family:'Orbitron',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:.75rem;}
+.imp-submit:hover{background:rgba(160,96,255,.08);}
+.imp-submit:active{transform:scale(.98);}
+.imp-submit:disabled{opacity:.4;cursor:default;}
+
+/* Shared feedback / next */
+.feedback{text-align:center;font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;min-height:20px;margin-bottom:.75rem;}
+.feedback.correct{color:var(--c-ok);}
+.feedback.wrong{color:var(--c-neg);}
+.next-btn{display:block;width:100%;background:transparent;border:1px solid var(--c-accent);border-radius:6px;padding:12px;color:var(--c-accent);font-family:'Orbitron',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:background .15s,transform .1s;}
+.next-btn:hover{background:rgba(0,180,255,.08);}
+.next-btn:active{transform:scale(.98);}
+.back-btn{display:block;width:100%;background:transparent;border:1px solid var(--c-border);border-radius:6px;padding:10px;color:var(--c-muted);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:border-color .12s,color .12s;margin-top:8px;}
+.back-btn:hover{border-color:var(--c-text);color:var(--c-text);}
+
+/* Impossible name flash */
+.imp-name-flash{font-family:'Orbitron',monospace;font-size:14px;color:var(--c-purple);letter-spacing:2px;text-align:center;padding:10px;border:1px solid rgba(160,96,255,.3);border-radius:6px;background:rgba(160,96,255,.06);margin-bottom:1rem;transition:opacity .3s;}
+
+/* Results */
+.results-screen{text-align:center;padding:1.5rem 0 2rem;}
+.results-title{font-family:'Orbitron',monospace;font-size:14px;letter-spacing:4px;text-transform:uppercase;color:var(--c-muted);margin-bottom:.5rem;}
+.results-score{font-family:'Orbitron',monospace;font-size:56px;font-weight:900;color:#e0eaff;line-height:1;margin:.5rem 0;}
+.results-sub{font-size:14px;color:var(--c-muted);letter-spacing:1px;margin-bottom:.4rem;}
+.results-grade{font-family:'Orbitron',monospace;font-size:13px;color:var(--c-accent);letter-spacing:2px;margin-bottom:1.25rem;}
+.new-record{font-family:'Orbitron',monospace;font-size:12px;letter-spacing:3px;margin-bottom:.5rem;animation:glow 1.5s ease-in-out infinite alternate;}
+.new-record.gold{color:var(--c-gold);}
+.new-record.green{color:var(--c-ok);}
+@keyframes glow{from{opacity:.6}to{opacity:1}}
+.results-breakdown{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:1.5rem;}
+.breakdown-cell{background:var(--c-surface);border:1px solid var(--c-border);border-radius:6px;padding:8px 4px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--c-muted);}
+.breakdown-cell .bval{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;display:block;margin-bottom:3px;}
+.breakdown-cell.correct-cell .bval{color:var(--c-ok);}
+.breakdown-cell.wrong-cell .bval{color:var(--c-neg);}
+.breakdown-cell.score-cell .bval{color:var(--c-accent);}
+.breakdown-cell.streak-cell .bval{color:var(--c-gold);}
+.breakdown-cell.time-cell .bval{color:#c080ff;}
+.category-results{text-align:left;margin-bottom:1.5rem;}
+.cat-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);margin-bottom:.75rem;}
+.cat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;font-weight:600;}
+.cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cat-dot.c{background:var(--c-ok);}
+.cat-dot.w{background:var(--c-neg);}
+.cat-weapon{flex:1;color:var(--c-text);}
+.cat-result{font-family:'Orbitron',monospace;font-size:11px;}
+.cat-result.c{color:var(--c-ok);}
+.cat-result.w{color:var(--c-neg);}
+.daily-locked{text-align:center;padding:2rem 0;}
+.daily-locked-title{font-family:'Orbitron',monospace;font-size:14px;letter-spacing:3px;text-transform:uppercase;color:var(--c-purple);margin-bottom:.5rem;}
+.daily-locked-score{font-family:'Orbitron',monospace;font-size:48px;font-weight:900;color:#e0eaff;line-height:1;margin:.5rem 0;}
+.daily-locked-sub{font-size:13px;color:var(--c-muted);letter-spacing:1px;}
+
+/* Legend */
+.aux-wrap{max-width:580px;width:calc(100% - 3rem);margin:1rem auto 0;}
+.legend-toggle{display:block;width:100%;background:transparent;border:1px solid var(--c-border);border-radius:6px;padding:9px 14px;color:var(--c-muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-bottom:.75rem;text-align:left;transition:border-color .12s,color .12s;}
+.legend-toggle:hover{border-color:var(--c-accent);color:var(--c-accent);}
+.legend-panel{background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:1rem;margin-bottom:1.5rem;display:none;}
+.legend-panel.open{display:block;}
+.legend-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--c-accent);margin-bottom:.5rem;}
+.legend-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+.legend-row{display:flex;gap:6px;align-items:baseline;font-size:12px;padding:3px 0;border-bottom:1px solid var(--c-border);}
+.legend-row:last-child{border-bottom:none;}
+.legend-token{font-family:'Orbitron',monospace;font-size:11px;color:var(--c-accent);min-width:46px;}
+.legend-stat{color:var(--c-text);}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <h1 class="site-title">Riven Cipher</h1>
+  <p class="site-sub">Decode the hidden stats from the void</p>
+</header>
+
+<!-- ══ START PAGE ══ -->
+<div id="page-start" class="page w" style="margin-top:1.5rem;">
+  <div class="records-section w" style="width:100%">
+    <div class="records-title">Personal Records</div>
+    <div class="rec-row">
+      <div class="rec-cell"><div class="rv" id="r-best">—</div><div class="rl">Best Score</div></div>
+      <div class="rec-cell"><div class="rv" id="r-streak">0</div><div class="rl">Daily Streak</div></div>
+      <div class="rec-cell"><div class="rv" id="r-perfect">0</div><div class="rl">Perfect Runs</div></div>
+      <div class="rec-cell"><div class="rv" id="r-played">0</div><div class="rl">Games Played</div></div>
+    </div>
+  </div>
+
+  <div class="diff-grid w" style="width:100%">
+    <div class="diff-card practice" onclick="startGame('practice')">
+      <div class="dc-name">Practice</div>
+      <div class="dc-timer">No timer — learn at your own pace</div>
+      <div class="dc-best">Best: <span id="best-practice">—</span></div>
+    </div>
+    <div class="diff-card easy" onclick="startGame('easy')">
+      <div class="dc-name">Easy</div>
+      <div class="dc-timer">20 seconds per stat</div>
+      <div class="dc-best">Best: <span id="best-easy">—</span></div>
+    </div>
+    <div class="diff-card medium" onclick="startGame('medium')">
+      <div class="dc-name">Medium</div>
+      <div class="dc-timer">15 seconds per stat</div>
+      <div class="dc-best">Best: <span id="best-medium">—</span></div>
+    </div>
+    <div class="diff-card hard" onclick="startGame('hard')">
+      <div class="dc-name">Hard</div>
+      <div class="dc-timer">8 seconds per stat</div>
+      <div class="dc-best">Best: <span id="best-hard">—</span></div>
+    </div>
+    <div class="diff-card impossible" onclick="startGame('impossible')">
+      <div class="dc-name">Impossible</div>
+      <div class="dc-timer">Name shown for 1s — type your answers</div>
+      <div class="dc-best">Best: <span id="best-impossible">—</span></div>
+    </div>
+    <div class="diff-card daily" id="daily-card" onclick="startDaily()">
+      <div class="dc-name">Daily Challenge</div>
+      <div class="dc-timer">Impossible mode · One attempt · Resets at midnight</div>
+      <div class="dc-best">Today: <span id="best-daily">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAME PAGE ══ -->
+<div id="page-game" class="page hidden">
+  <div class="w" style="text-align:center;"><div class="mode-badge" id="mode-badge">Medium</div></div>
+  <div class="stats-bar">
+    <div class="stat-cell"><div class="val" id="s-score">0</div><div class="lbl">Score</div></div>
+    <div class="stat-cell"><div class="val" id="s-streak">0</div><div class="lbl">Streak</div></div>
+    <div class="stat-cell"><div class="val" id="s-round">1 / 10</div><div class="lbl">Round</div></div>
+    <div class="stat-cell"><div class="val" id="s-correct">0</div><div class="lbl">Correct</div></div>
+  </div>
+  <div class="timer-wrap" id="timer-wrap">
+    <div class="timer-row">
+      <span class="timer-label">Speed</span>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+      <span class="timer-val" id="timer-val">—</span>
+    </div>
+  </div>
+  <div class="progress-row" id="progress-row"></div>
+  <main class="main" id="main"></main>
+</div>
+
+<!-- Legend (always shown below active page) -->
+<div class="aux-wrap" id="aux-wrap">
+  <button class="legend-toggle" onclick="document.getElementById('lgp').classList.toggle('open')">⊞ Token Reference</button>
+  <div class="legend-panel" id="lgp"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// COOKIES
+// ══════════════════════════════════════════════════════════════
+const COOKIE_KEY = 'riven-cipher-v2';
+
+function saveCookies(data){
+  const exp = new Date(); exp.setFullYear(exp.getFullYear()+2);
+  document.cookie = COOKIE_KEY+'='+encodeURIComponent(JSON.stringify(data))+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
+}
+function loadCookies(){
+  const m = document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(COOKIE_KEY+'='));
+  if(!m) return null;
+  try{ return JSON.parse(decodeURIComponent(m.split('=').slice(1).join('='))); }catch(e){ return null; }
+}
+
+let REC = loadCookies() || {
+  bestScore:0, gamesPlayed:0, perfectRuns:0, dailyStreak:0, lastPerfectDate:null,
+  bestByMode:{practice:0,easy:0,medium:0,hard:0,impossible:0},
+  dailyDate:null, dailyScore:null
+};
+// Ensure new fields exist on old cookies
+if(!REC.bestByMode) REC.bestByMode={practice:0,easy:0,medium:0,hard:0,impossible:0};
+if(REC.dailyDate===undefined){ REC.dailyDate=null; REC.dailyScore=null; }
+
+function saveRec(){ saveCookies(REC); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+// ══════════════════════════════════════════════════════════════
+// TOKEN TABLES
+// ══════════════════════════════════════════════════════════════
+const PREFIX = {
+  "Additional Combo Chance":"Laci","Ammo Maximum":"Ampi","Damage to Corpus":"Manti",
+  "Damage to Grineer":"Argi","Damage to Infested":"Pura","Cold Damage":"Geli",
+  "Combo Duration":"Tempi","Critical Chance":"Crita","Critical Chance on Slide":"Pleci",
+  "Critical Damage":"Acri","Base Damage":"Visi","Electricity Damage":"Vexi",
+  "Heat Damage":"Igni","Finisher Damage":"Exi","Fire Rate":"Croni","Attack Speed":"Croni",
+  "Flight Speed":"Conci","Initial Combo":"Para","Impact Damage":"Magna",
+  "Magazine Capacity":"Arma","Melee Combo Efficiency":"Forti","Multishot":"Sati",
+  "Toxin Damage":"Toxi","Punch Through":"Lexi","Puncture Damage":"Insi",
+  "Range":"Locti","Reload Speed":"Feva","Slash Damage":"Sci","Status Chance":"Hexa",
+  "Status Duration":"Deci","Recoil":"Zeti","Zoom":"Hera",
+};
+const SUFFIX = {
+  "Additional Combo Chance":"Nus","Ammo Maximum":"Bin","Damage to Corpus":"Tron",
+  "Damage to Grineer":"Con","Damage to Infested":"Ada","Cold Damage":"Do",
+  "Combo Duration":"Nem","Critical Chance":"Cron","Critical Chance on Slide":"Nent",
+  "Critical Damage":"Tis","Base Damage":"Ata","Electricity Damage":"Tio",
+  "Heat Damage":"Pha","Finisher Damage":"Cta","Fire Rate":"Dra","Attack Speed":"Dra",
+  "Flight Speed":"Nak","Initial Combo":"Um","Impact Damage":"Ton","Magazine Capacity":"Tin",
+  "Melee Combo Efficiency":"Us","Multishot":"Can","Toxin Damage":"Tox","Punch Through":"Nok",
+  "Puncture Damage":"Cak","Range":"Tor","Reload Speed":"Tak","Slash Damage":"Sus",
+  "Status Chance":"Dex","Status Duration":"Des","Recoil":"Mag","Zoom":"Lis",
+};
+
+const MELEE_TYPES = new Set([
+  "Heavy Blade","Dual Blades","Nikana","Scythe","Polearm","Whip","Zaw","Dagger",
+  "Gunblade","Two-Handed Nikana","Sword","Sparring","Hammer","Glaive","Claws",
+  "Tonfas","Machete","Rapier","Blade and Whip",
+]);
+
+const RANGED_PREFIX_POOL = [
+  "Ammo Maximum","Damage to Corpus","Damage to Grineer","Damage to Infested",
+  "Cold Damage","Critical Chance","Critical Damage","Base Damage","Electricity Damage",
+  "Heat Damage","Fire Rate","Flight Speed","Impact Damage","Magazine Capacity","Multishot",
+  "Toxin Damage","Punch Through","Puncture Damage","Reload Speed","Slash Damage",
+  "Status Chance","Status Duration","Recoil","Zoom",
+];
+const RANGED_SUFFIX_POOL = RANGED_PREFIX_POOL.filter(s=>s in SUFFIX);
+const MELEE_PREFIX_POOL = [
+  "Cold Damage","Critical Chance","Critical Damage","Base Damage","Electricity Damage",
+  "Heat Damage","Attack Speed","Toxin Damage","Slash Damage","Status Chance",
+  "Status Duration","Impact Damage","Puncture Damage","Damage to Corpus",
+  "Damage to Grineer","Damage to Infested","Combo Duration","Initial Combo","Range",
+  "Finisher Damage","Additional Combo Chance","Melee Combo Efficiency","Critical Chance on Slide",
+];
+const MELEE_SUFFIX_POOL = MELEE_PREFIX_POOL.filter(s=>s in SUFFIX);
+const RANGED_NEG_POOL = ["Damage to Corpus","Damage to Grineer","Damage to Infested","Critical Chance","Fire Rate","Flight Speed","Multishot","Reload Speed","Status Chance","Zoom","Recoil","Ammo Maximum"];
+const MELEE_NEG_POOL  = ["Damage to Corpus","Damage to Grineer","Damage to Infested","Critical Chance","Critical Damage","Attack Speed","Base Damage","Slash Damage","Status Chance","Combo Duration","Range"];
+
+function statPool(slotIdx, type){
+  const m = MELEE_TYPES.has(type);
+  return slotIdx<2 ? (m?MELEE_PREFIX_POOL:RANGED_PREFIX_POOL) : (m?MELEE_SUFFIX_POOL:RANGED_SUFFIX_POOL);
+}
+function buildName(short,pos){ return [short,PREFIX[pos[0]]||"Visi",PREFIX[pos[1]]||"Acri",SUFFIX[pos[2]]||"Ata"].join("-"); }
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function pickUnique(pool,n,ex=[]){return shuffle(pool.filter(s=>!ex.includes(s))).slice(0,n);}
+function generateStats(type){
+  const m=MELEE_TYPES.has(type);
+  const pp=m?MELEE_PREFIX_POOL:RANGED_PREFIX_POOL;
+  const sp=m?MELEE_SUFFIX_POOL:RANGED_SUFFIX_POOL;
+  const np=m?MELEE_NEG_POOL:RANGED_NEG_POOL;
+  const p01=pickUnique(pp,2);
+  const p2=pickUnique(sp,1,p01);
+  const pos=[...p01,...p2];
+  const neg=Math.random()<0.5?pickUnique(np,1,pos):[];
+  return{pos,neg};
+}
+
+// ══════════════════════════════════════════════════════════════
+// STAT ALIASES (for Impossible typed input)
+// ══════════════════════════════════════════════════════════════
+// Map every alias to its canonical stat name
+const ALIASES = {
+  // shorthand keys
+  "dmg":"Base Damage","damage":"Base Damage",
+  "cc":"Critical Chance","critchance":"Critical Chance","crit chance":"Critical Chance",
+  "cd":"Critical Damage","critdamage":"Critical Damage","crit damage":"Critical Damage",
+  "as":"Attack Speed","attackspeed":"Attack Speed","attack speed":"Attack Speed",
+  "fr":"Fire Rate","firerate":"Fire Rate","fire rate":"Fire Rate",
+  "ic":"Initial Combo","initialcombo":"Initial Combo","initial combo":"Initial Combo",
+  "combodur":"Combo Duration","dur":"Combo Duration","dura":"Combo Duration","comboduration":"Combo Duration","combo duration":"Combo Duration",
+  "ccg":"Additional Combo Chance","combocountgain":"Additional Combo Chance","combocount":"Additional Combo Chance",
+  "additional combo chance":"Additional Combo Chance","additional combo count chance":"Additional Combo Chance",
+  "rec":"Recoil","recoil":"Recoil",
+  "sl":"Slash Damage","slash":"Slash Damage","slash damage":"Slash Damage",
+  "ms":"Multishot","multishot":"Multishot",
+  "tox":"Toxin Damage","toxin":"Toxin Damage","toxin damage":"Toxin Damage","poison":"Toxin Damage","poison damage":"Toxin Damage",
+  "elec":"Electricity Damage","electric":"Electricity Damage","electricity":"Electricity Damage","electricity damage":"Electricity Damage","elec damage":"Electricity Damage",
+  "slide":"Critical Chance on Slide","slidecrit":"Critical Chance on Slide","critical chance on slide":"Critical Chance on Slide","slide crit":"Critical Chance on Slide",
+  "finisher":"Finisher Damage","fin":"Finisher Damage","finisher damage":"Finisher Damage",
+  "dtg":"Damage to Grineer","grineer":"Damage to Grineer","damage vs grineer":"Damage to Grineer","damage to grineer":"Damage to Grineer",
+  "dti":"Damage to Infested","infested":"Damage to Infested","damage vs infested":"Damage to Infested","damage to infested":"Damage to Infested",
+  "dtc":"Damage to Corpus","corpus":"Damage to Corpus","damage vs corpus":"Damage to Corpus","damage to corpus":"Damage to Corpus",
+  "ammo":"Ammo Maximum","ammo maximum":"Ammo Maximum","ammomax":"Ammo Maximum",
+  "imp":"Impact Damage","impact":"Impact Damage","impact damage":"Impact Damage",
+  "punc":"Puncture Damage","puncture":"Puncture Damage","puncture damage":"Puncture Damage",
+  "mag":"Magazine Capacity","magazine":"Magazine Capacity","magazine capacity":"Magazine Capacity","magcap":"Magazine Capacity",
+  "pt":"Punch Through","punchthrough":"Punch Through","punch through":"Punch Through",
+  "sc":"Status Chance","statuschance":"Status Chance","status chance":"Status Chance",
+  "sd":"Status Duration","statusduration":"Status Duration","status duration":"Status Duration",
+  "reload":"Reload Speed","rls":"Reload Speed","reloadspeed":"Reload Speed","reload speed":"Reload Speed",
+  "pfs":"Flight Speed","flightspeed":"Flight Speed","flight speed":"Flight Speed","projectile speed":"Flight Speed","projectile flight speed":"Flight Speed",
+  "z":"Zoom","zoom":"Zoom",
+  "heat":"Heat Damage","heat damage":"Heat Damage","fire damage":"Heat Damage",
+  "cold":"Cold Damage","cold damage":"Cold Damage",
+  "range":"Range","melee range":"Range",
+  "base damage":"Base Damage",
+  "critical chance on slide attack":"Critical Chance on Slide",
+  "combo count":"Additional Combo Chance",
+  "melee combo efficiency":"Melee Combo Efficiency","eff":"Melee Combo Efficiency",
+};
+
+function resolveInput(raw){
+  const s = raw.toLowerCase().trim().replace(/\s+/g,' ');
+  if(ALIASES[s]) return ALIASES[s];
+  // also try stripping all spaces
+  const ns = s.replace(/\s/g,'');
+  if(ALIASES[ns]) return ALIASES[ns];
+  // try canonical names case-insensitively
+  for(const key of Object.keys(PREFIX)){
+    if(key.toLowerCase()===s) return key;
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════════════════════
+// WEAPON ROSTER
+// ══════════════════════════════════════════════════════════════
+const RAW_DB = [
+  {weapon:"Soma Prime",      short:"Soma",       type:"Rifle",             polarity:"V",dispo:5},
+  {weapon:"Sybaris Prime",   short:"Sybaris",    type:"Rifle",             polarity:"D",dispo:4},
+  {weapon:"Braton Prime",    short:"Braton",     type:"Rifle",             polarity:"—",dispo:3},
+  {weapon:"Latron Prime",    short:"Latron",     type:"Rifle",             polarity:"D",dispo:4},
+  {weapon:"Opticor Vandal",  short:"Opticor",    type:"Rifle",             polarity:"—",dispo:2},
+  {weapon:"Ignis Wraith",    short:"Ignis",      type:"Rifle",             polarity:"V",dispo:3},
+  {weapon:"Prisma Grinlok",  short:"Grinlok",    type:"Rifle",             polarity:"D",dispo:5},
+  {weapon:"Tiberon Prime",   short:"Tiberon",    type:"Rifle",             polarity:"V",dispo:2},
+  {weapon:"Kuva Bramma",     short:"Bramma",     type:"Bow",               polarity:"V",dispo:1},
+  {weapon:"Dread",           short:"Dread",      type:"Bow",               polarity:"—",dispo:3},
+  {weapon:"Paris Prime",     short:"Paris",      type:"Bow",               polarity:"V",dispo:5},
+  {weapon:"Cernos Prime",    short:"Cernos",     type:"Bow",               polarity:"—",dispo:5},
+  {weapon:"Zhuge Prime",     short:"Zhuge",      type:"Bow",               polarity:"D",dispo:3},
+  {weapon:"Rubico Prime",    short:"Rubico",     type:"Sniper",            polarity:"D",dispo:1},
+  {weapon:"Lanka",           short:"Lanka",      type:"Sniper",            polarity:"D",dispo:4},
+  {weapon:"Vectis Prime",    short:"Vectis",     type:"Sniper",            polarity:"V",dispo:3},
+  {weapon:"Komorex",         short:"Komorex",    type:"Sniper",            polarity:"—",dispo:4},
+  {weapon:"Arca Plasmor",    short:"Arcaplasmor",type:"Shotgun",           polarity:"V",dispo:2},
+  {weapon:"Tigris Prime",    short:"Tigris",     type:"Shotgun",           polarity:"—",dispo:1},
+  {weapon:"Kohm",            short:"Kohm",       type:"Shotgun",           polarity:"V",dispo:4},
+  {weapon:"Boar Prime",      short:"Boar",       type:"Shotgun",           polarity:"D",dispo:5},
+  {weapon:"Astilla Prime",   short:"Astilla",    type:"Shotgun",           polarity:"—",dispo:2},
+  {weapon:"Vaykor Hek",      short:"Hek",        type:"Shotgun",           polarity:"V",dispo:3},
+  {weapon:"Catchmoon",       short:"Catchmoon",  type:"Secondary",         polarity:"V",dispo:2},
+  {weapon:"Pyrana Prime",    short:"Pyrana",     type:"Secondary",         polarity:"D",dispo:1},
+  {weapon:"Euphona Prime",   short:"Euphona",    type:"Secondary",         polarity:"V",dispo:3},
+  {weapon:"Pandero Prime",   short:"Pandero",    type:"Secondary",         polarity:"—",dispo:2},
+  {weapon:"Aksomati Prime",  short:"Aksomati",   type:"Secondary",         polarity:"D",dispo:5},
+  {weapon:"Sicarus Prime",   short:"Sicarus",    type:"Secondary",         polarity:"V",dispo:4},
+  {weapon:"Kuva Brakk",      short:"Brakk",      type:"Secondary",         polarity:"—",dispo:3},
+  {weapon:"Tombfinger",      short:"Tombfinger", type:"Secondary",         polarity:"V",dispo:2},
+  {weapon:"Gram Prime",      short:"Gram",       type:"Heavy Blade",       polarity:"V",dispo:3},
+  {weapon:"Kronen Prime",    short:"Kronen",     type:"Dual Blades",       polarity:"D",dispo:2},
+  {weapon:"Skiajati",        short:"Skiajati",   type:"Nikana",            polarity:"—",dispo:5},
+  {weapon:"Reaper Prime",    short:"Reaper",     type:"Scythe",            polarity:"V",dispo:4},
+  {weapon:"Galatine Prime",  short:"Galatine",   type:"Heavy Blade",       polarity:"D",dispo:3},
+  {weapon:"Nikana Prime",    short:"Nikana",     type:"Nikana",            polarity:"V",dispo:3},
+  {weapon:"Orthos Prime",    short:"Orthos",     type:"Polearm",           polarity:"D",dispo:5},
+  {weapon:"Lesion",          short:"Lesion",     type:"Polearm",           polarity:"—",dispo:4},
+  {weapon:"Atterax",         short:"Atterax",    type:"Whip",              polarity:"V",dispo:5},
+  {weapon:"Plague Kripath",  short:"Kripath",    type:"Zaw",               polarity:"—",dispo:4},
+  {weapon:"Karyst Prime",    short:"Karyst",     type:"Dagger",            polarity:"D",dispo:4},
+  {weapon:"Stropha",         short:"Stropha",    type:"Gunblade",          polarity:"V",dispo:3},
+  {weapon:"Pennant",         short:"Pennant",    type:"Two-Handed Nikana", polarity:"—",dispo:4},
+  {weapon:"Xoris",           short:"Xoris",      type:"Glaive",            polarity:"V",dispo:5},
+  {weapon:"Volnus Prime",    short:"Volnus",     type:"Hammer",            polarity:"D",dispo:3},
+];
+
+// ══════════════════════════════════════════════════════════════
+// DIFFICULTY CONFIG
+// ══════════════════════════════════════════════════════════════
+const DIFF = {
+  practice:   {label:"Practice",   time:0,    speed:false, imp:false},
+  easy:       {label:"Easy",       time:20,   speed:true,  imp:false},
+  medium:     {label:"Medium",     time:15,   speed:true,  imp:false},
+  hard:       {label:"Hard",       time:8,    speed:true,  imp:false},
+  impossible: {label:"Impossible", time:1,    speed:false, imp:true},
+  daily:      {label:"Daily",      time:1,    speed:false, imp:true},
+};
+
+// ══════════════════════════════════════════════════════════════
+// DAILY CHALLENGE SEED
+// Generates a deterministic set of 10 weapon indices from today's date
+// ══════════════════════════════════════════════════════════════
+function dailySeed(){
+  // Simple seeded PRNG (mulberry32)
+  const dateStr = todayStr().replace(/-/g,'');
+  let seed = parseInt(dateStr) % 2147483647;
+  function rand(){
+    seed = (seed * 16807) % 2147483647;
+    return (seed-1)/2147483646;
+  }
+  // Pick 10 unique indices
+  const indices = [];
+  const pool = [...Array(RAW_DB.length).keys()];
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(rand()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  const weapons = pool.slice(0,10).map(i=>RAW_DB[i]);
+  // Generate stats seeded
+  return weapons.map(w=>{
+    const m=MELEE_TYPES.has(w.type);
+    const pp=m?MELEE_PREFIX_POOL:RANGED_PREFIX_POOL;
+    const sp=m?MELEE_SUFFIX_POOL:RANGED_SUFFIX_POOL;
+    const np=m?MELEE_NEG_POOL:RANGED_NEG_POOL;
+    // seeded shuffle
+    function seededShuffle(arr){
+      const a=[...arr];
+      for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+      return a;
+    }
+    const p01=seededShuffle(pp).slice(0,2);
+    const p2=seededShuffle(sp.filter(s=>!p01.includes(s))).slice(0,1);
+    const pos=[...p01,...p2];
+    const neg=rand()<0.5?seededShuffle(np.filter(s=>!pos.includes(s))).slice(0,1):[];
+    return {...w, pos, neg, name:buildName(w.short,pos)};
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════════════════════════════
+let G = {};
+let timerInterval = null;
+let questionStartTime = 0;
+const SPEED_BONUS_MAX = 150;
+
+function makeOptions(correct,pool,exclude){
+  return shuffle([correct,...shuffle(pool.filter(s=>s!==correct&&!exclude.includes(s))).slice(0,3)]);
+}
+
+// ══════════════════════════════════════════════════════════════
+// PAGE SWITCHING
+// ══════════════════════════════════════════════════════════════
+function showPage(id){
+  ['page-start','page-game'].forEach(p=>document.getElementById(p).classList.toggle('hidden',p!==id));
+}
+
+function updateStartPage(){
+  const r = REC;
+  document.getElementById('r-best').textContent    = r.bestScore||'—';
+  document.getElementById('r-streak').textContent  = r.dailyStreak;
+  document.getElementById('r-perfect').textContent = r.perfectRuns;
+  document.getElementById('r-played').textContent  = r.gamesPlayed;
+  ['practice','easy','medium','hard','impossible'].forEach(d=>{
+    const v = r.bestByMode[d];
+    document.getElementById('best-'+d).textContent = v ? v : '—';
+  });
+  // Daily
+  const dc = document.getElementById('daily-card');
+  const ds = document.getElementById('best-daily');
+  if(r.dailyDate===todayStr() && r.dailyScore!==null){
+    ds.textContent = r.dailyScore;
+    const badge = dc.querySelector('.dc-done-badge') || document.createElement('div');
+    badge.className='dc-done-badge'; badge.textContent='Completed';
+    if(!dc.querySelector('.dc-done-badge')) dc.appendChild(badge);
+  } else {
+    ds.textContent='—';
+    const b=dc.querySelector('.dc-done-badge'); if(b) b.remove();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// START / INIT
+// ══════════════════════════════════════════════════════════════
+function startGame(mode){
+  clearInterval(timerInterval);
+  const weapons = shuffle([...RAW_DB]).slice(0,10).map(w=>{
+    const {pos,neg}=generateStats(w.type);
+    return {...w,pos,neg,name:buildName(w.short,pos)};
+  });
+  _initGame(mode, weapons, false);
+}
+
+function startDaily(){
+  const today = todayStr();
+  // Already played today?
+  if(REC.dailyDate===today && REC.dailyScore!==null){
+    showDailyLocked(); return;
+  }
+  clearInterval(timerInterval);
+  const weapons = dailySeed();
+  _initGame('daily', weapons, true);
+}
+
+function _initGame(mode, weapons, isDaily){
+  G = {
+    mode, isDaily,
+    pool: weapons,
+    round:0, qIdx:0,
+    score:0, streak:0, bestStreak:0,
+    results:[], totalTime:0,
+    impAnswers:[], // for impossible: array of per-round answered booleans per slot
+  };
+
+  // Mode badge
+  const mb = document.getElementById('mode-badge');
+  mb.className='mode-badge '+mode;
+  mb.textContent = DIFF[mode].label + (isDaily?' — Daily Challenge':'');
+
+  // Timer visibility
+  const d = DIFF[mode];
+  document.getElementById('timer-wrap').style.display = (d.time>0)?'':'none';
+
+  showPage('page-game');
+  updateGameStats(); renderProgress(); renderRound();
+}
+
+// ══════════════════════════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════════════════════════
+function startTimer(duration){
+  clearInterval(timerInterval);
+  questionStartTime = Date.now();
+  updateTimerUI(duration, duration);
+  timerInterval = setInterval(()=>{
+    const rem = Math.max(0, duration-(Date.now()-questionStartTime)/1000);
+    updateTimerUI(rem, duration);
+    if(rem<=0){
+      clearInterval(timerInterval);
+      handleAnswer('__timeout__', G.pool[G.round].pos[G.qIdx]);
+    }
+  },100);
+}
+
+function stopTimer(){ clearInterval(timerInterval); }
+
+function updateTimerUI(rem, total){
+  const pct=rem/total;
+  const fill=document.getElementById('timer-fill');
+  const val=document.getElementById('timer-val');
+  if(!fill||!val) return;
+  fill.style.width=(pct*100)+'%';
+  const col=pct>0.5?'var(--c-gold)':pct>0.25?'#f08000':'var(--c-neg)';
+  fill.style.background=col; val.style.color=col;
+  val.textContent=rem.toFixed(1)+'s';
+}
+
+function getSpeedBonus(duration){
+  if(!duration) return 0;
+  const elapsed=(Date.now()-questionStartTime)/1000;
+  return Math.round(Math.max(0,1-(elapsed/duration))*SPEED_BONUS_MAX);
+}
+
+// ══════════════════════════════════════════════════════════════
+// MOD CARD HTML
+// ══════════════════════════════════════════════════════════════
+function modCardHTML(riven, revealedCount, showNameNow, hideName){
+  const rankDots=Array.from({length:8},()=>`<div class="rank-dot on"></div>`).join('');
+  const dispoPips=Array.from({length:5},(_,i)=>`<div class="dispo-pip ${i<riven.dispo?'on':''}"></div>`).join('');
+  let statsHtml='';
+  riven.pos.forEach((stat,i)=>{
+    const rev=i<revealedCount;
+    statsHtml+=`<div class="stat-row"><div class="stat-sign pos">+</div><div class="stat-pill ${rev?'revealed pos':'hidden-anim'}">${rev?stat:''}</div></div>`;
+  });
+  riven.neg.forEach(()=>{
+    statsHtml+=`<div class="stat-row"><div class="stat-sign unk">?</div><div class="stat-pill unknown"><span class="neg-hint">negative — not encoded in name</span></div></div>`;
+  });
+  const nameDisplay = hideName ? '? ? ? - ? ? ? - ? ? ? - ? ? ?' : riven.name;
+  const nameClass   = hideName ? 'mod-name hidden-name' : 'mod-name';
+  return `<div class="mod-card">
+    <div class="mod-card-header">
+      <div class="weapon-info">
+        <div class="weapon-type-badge">${riven.type}</div>
+        <div class="weapon-name">${riven.weapon}</div>
+        <div class="${nameClass}">${nameDisplay}</div>
+      </div>
+      <div class="polarity-wrap">
+        <div class="polarity-badge">${riven.polarity}</div>
+        <div class="dispo-bar">${dispoPips}</div>
+      </div>
+    </div>
+    <div class="rank-row">${rankDots}</div>
+    <div class="stat-slots">${statsHtml}</div>
+  </div>`;
+}
+
+function nameHintHTML(riven, askingIdx){
+  const parts=riven.name.split('-');
+  const roles=['weapon','prefix','prefix','suffix'];
+  const nodes=parts.map((tok,i)=>{
+    const isAsking=i===askingIdx+1, isAnswered=i>0&&i<askingIdx+1;
+    return `<div class="nh-token"><span class="nh-word ${isAsking?'asking':isAnswered?'answered':''}">${tok}</span><span class="nh-role ${isAsking?'asking':''}">${roles[i]}</span></div>`;
+  });
+  const withSeps=nodes.reduce((acc,n,i)=>i===0?[n]:[...acc,`<span class="nh-sep">-</span>`,n],[]);
+  return `<div class="name-hint"><div class="nh-row">${withSeps.join('')}</div></div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER ROUND
+// ══════════════════════════════════════════════════════════════
+function updateGameStats(){
+  document.getElementById('s-score').textContent   = G.score;
+  document.getElementById('s-streak').textContent  = G.streak;
+  document.getElementById('s-round').textContent   = (G.round+1)+' / 10';
+  document.getElementById('s-correct').textContent = G.results.filter(Boolean).length;
+}
+
+function renderProgress(){
+  const row=document.getElementById('progress-row');
+  row.innerHTML='';
+  for(let i=0;i<10;i++){
+    const d=document.createElement('div');
+    d.className='pdot'+(i===G.round?' current':i<G.results.length?(G.results[i]?' done-correct':' done-wrong'):'');
+    row.appendChild(d);
+  }
+}
+
+function renderRound(){
+  const d = DIFF[G.mode];
+  if(d.imp) renderImpossibleRound();
+  else       renderMCRound();
+}
+
+// ── Multiple choice round ─────────────────────────────────────
+function renderMCRound(){
+  const riven=G.pool[G.round], qi=G.qIdx, d=DIFF[G.mode];
+  const target=riven.pos[qi];
+  const pool=statPool(qi,riven.type);
+  const others=riven.pos.filter((_,i)=>i!==qi);
+  const options=makeOptions(target,pool,others);
+  const safe=s=>s.replace(/'/g,"\\'");
+  const slotLabel=qi<2?`Prefix ${qi+1}`:'Suffix';
+  const optBtns=options.map(o=>`<button class="opt-btn" data-opt="${o}" onclick="handleAnswer('${safe(o)}','${safe(target)}')">${o}</button>`).join('');
+
+  document.getElementById('main').innerHTML=`
+    ${modCardHTML(riven,qi,false,false)}
+    <div class="q-area">
+      <div class="q-label">Identify stat ${qi+1} of 3 — ${slotLabel}</div>
+      ${nameHintHTML(riven,qi)}
+      <div class="q-prompt">What does this token encode?</div>
+      <div class="speed-flash" id="speed-flash"></div>
+      <div class="options-grid">${optBtns}</div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <button class="back-btn" onclick="goBack()">← Back to Menu</button>`;
+
+  if(d.time>0) startTimer(d.time);
+}
+
+function handleAnswer(chosen, correct){
+  stopTimer();
+  const d=DIFF[G.mode];
+  const elapsed=Math.min((Date.now()-questionStartTime)/1000, d.time||0);
+  if(d.time) G.totalTime+=elapsed;
+
+  document.querySelectorAll('.opt-btn').forEach(b=>{
+    b.disabled=true;
+    if(b.dataset.opt===correct) b.classList.add('correct-ans');
+    else if(b.dataset.opt===chosen&&chosen!==correct) b.classList.add('wrong-ans');
+  });
+
+  const isCorrect=chosen!=='__timeout__'&&chosen===correct;
+  const fb=document.getElementById('feedback');
+  const sf=document.getElementById('speed-flash');
+  if(isCorrect){
+    G.streak++; G.bestStreak=Math.max(G.bestStreak,G.streak);
+    const sb=Math.floor(G.streak/3)*50;
+    const spd=d.speed?getSpeedBonus(d.time):0;
+    G.score+=100+sb+spd;
+    const extras=[]; if(sb) extras.push(`+${sb} streak`); if(spd) extras.push(`+${spd} speed`);
+    fb.textContent=extras.length?`✓ Correct  (${extras.join(', ')})`:'✓ Correct';
+    fb.className='feedback correct';
+    if(spd>80&&sf) sf.textContent=`⚡ ${spd} speed bonus!`;
+  } else {
+    G.streak=0;
+    fb.textContent=chosen==='__timeout__'?`✗ Time's up — ${correct}`:`✗ Wrong — ${correct}`;
+    fb.className='feedback wrong';
+  }
+  updateGameStats();
+
+  const riven=G.pool[G.round], nextQ=G.qIdx+1;
+  setTimeout(()=>{
+    if(nextQ<3){ G.qIdx=nextQ; renderMCRound(); }
+    else{ G.results.push(isCorrect); renderMCReveal(riven,isCorrect); }
+  },1100);
+}
+
+function renderMCReveal(riven,wasCorrect){
+  const isLast=G.round>=9;
+  document.getElementById('main').innerHTML=`
+    ${modCardHTML(riven,3,false,false)}
+    <div class="q-area">
+      <div class="feedback ${wasCorrect?'correct':'wrong'}" style="margin-bottom:1rem;">${wasCorrect?'✓ All stats decoded':'✗ Incorrect'}</div>
+      <button class="next-btn" onclick="advanceRound()">${isLast?'See Results':'Next Mod'} →</button>
+    </div>
+    <button class="back-btn" onclick="goBack()">← Back to Menu</button>`;
+  renderProgress();
+}
+
+// ── Impossible round ──────────────────────────────────────────
+// State for current impossible round
+let IMP = {};
+
+function renderImpossibleRound(){
+  const riven=G.pool[G.round];
+  IMP = {
+    riven,
+    answered: [null,null,null], // null=pending, true=correct, false=wrong
+    submitted: false,
+    nameVisible: true,
+  };
+
+  // Show name, then hide after 1s
+  document.getElementById('main').innerHTML=buildImpossibleHTML(riven, true, false);
+
+  setTimeout(()=>{
+    IMP.nameVisible=false;
+    refreshImpossibleCard();
+  }, 1000);
+}
+
+function buildImpossibleHTML(riven, showName, submitted){
+  const slots = [0,1,2].map(i=>{
+    const ans = IMP.answered[i];
+    let cls='imp-input', val='', dis='', placeholder=`Stat ${i+1}...`;
+    if(ans===true){  cls+=' correct';  val=riven.pos[i]; dis='disabled'; }
+    if(ans===false){ cls+=' wrong';    val=IMP.inputVals?.[i]||''; dis='disabled'; }
+    return `<div class="imp-slot">
+      <span class="imp-slot-num">${i+1}</span>
+      <input class="${cls}" id="imp-in-${i}" type="text" placeholder="${placeholder}" value="${val}" ${dis} autocomplete="off" spellcheck="false"
+        onkeydown="impKeydown(event,${i})">
+    </div>`;
+  }).join('');
+
+  const nameToken = showName
+    ? `<div class="imp-name-flash" id="imp-name-flash">${riven.name}</div>`
+    : IMP.nameVisible
+      ? `<div class="imp-name-flash" id="imp-name-flash">${riven.name}</div>`
+      : '';
+
+  // Build partial revealed name: show tokens for correct answers
+  const parts = riven.name.split('-');
+  const revealedParts = parts.map((tok,i)=>{
+    if(i===0) return tok; // weapon short always visible
+    const posIdx=i-1;
+    if(posIdx<3 && IMP.answered[posIdx]===true) return `<span style="color:var(--c-ok)">${tok}</span>`;
+    return `<span style="color:var(--c-muted)">???</span>`;
+  });
+  const partialName = revealedParts.join('<span style="color:var(--c-muted)">-</span>');
+
+  return `
+    ${modCardHTML(riven,0,false,true)}
+    <div class="imp-area">
+      ${nameToken}
+      <div style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;text-align:center;color:var(--c-muted);margin-bottom:.75rem;">${partialName}</div>
+      <div class="imp-hint">Type stat names or abbreviations. Press Enter to confirm each.</div>
+      <div class="imp-slots">${slots}</div>
+      <button class="imp-submit" id="imp-submit-btn" onclick="submitImpossible()" ${submitted?'disabled':''}>Submit All →</button>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <button class="back-btn" onclick="goBack()">← Back to Menu</button>`;
+}
+
+function refreshImpossibleCard(){
+  document.getElementById('main').innerHTML=buildImpossibleHTML(IMP.riven, false, IMP.submitted);
+  // Re-focus first unanswered input
+  for(let i=0;i<3;i++){
+    if(IMP.answered[i]===null){ const el=document.getElementById('imp-in-'+i); if(el) el.focus(); break; }
+  }
+}
+
+function impKeydown(e, idx){
+  if(e.key==='Enter'){ e.preventDefault(); confirmImpSlot(idx); }
+  else if(e.key==='Tab'){ e.preventDefault();
+    // Move to next unanswered
+    for(let i=idx+1;i<3;i++){ if(IMP.answered[i]===null){ document.getElementById('imp-in-'+i)?.focus(); break; } }
+  }
+}
+
+function confirmImpSlot(idx){
+  if(IMP.answered[idx]!==null) return; // already answered
+  const el=document.getElementById('imp-in-'+idx);
+  if(!el) return;
+  const raw=el.value.trim();
+  if(!raw) return;
+  const resolved=resolveInput(raw);
+  const correct=IMP.riven.pos[idx];
+  const isCorrect=resolved===correct;
+
+  if(!IMP.inputVals) IMP.inputVals=['','',''];
+  IMP.inputVals[idx]=raw;
+  IMP.answered[idx]=isCorrect;
+
+  if(isCorrect){
+    G.score+=100; G.streak++; G.bestStreak=Math.max(G.bestStreak,G.streak);
+  } else {
+    G.streak=0;
+  }
+  updateGameStats();
+  refreshImpossibleCard();
+}
+
+function submitImpossible(){
+  // Auto-mark any unconfirmed inputs as wrong
+  for(let i=0;i<3;i++){
+    if(IMP.answered[i]===null){
+      const el=document.getElementById('imp-in-'+i);
+      const raw=el?el.value.trim():'';
+      if(!IMP.inputVals) IMP.inputVals=['','',''];
+      IMP.inputVals[i]=raw;
+      if(raw){
+        const resolved=resolveInput(raw);
+        IMP.answered[i]=resolved===IMP.riven.pos[i];
+        if(IMP.answered[i]){ G.score+=100; G.streak++; G.bestStreak=Math.max(G.bestStreak,G.streak); }
+        else G.streak=0;
+      } else {
+        IMP.answered[i]=false;
+        G.streak=0;
+      }
+    }
+  }
+  IMP.submitted=true;
+  updateGameStats();
+
+  const allCorrect=IMP.answered.every(a=>a===true);
+  G.results.push(allCorrect);
+
+  // Show full reveal with correct answers shown
+  renderImpossibleReveal(IMP.riven, allCorrect);
+  renderProgress();
+}
+
+function renderImpossibleReveal(riven, allCorrect){
+  const isLast=G.round>=9;
+  // Build revealed slots showing correct answers and what was typed
+  const slots=[0,1,2].map(i=>{
+    const ok=IMP.answered[i];
+    const displayVal=ok?riven.pos[i]:(IMP.inputVals?.[i]||'(no answer)');
+    const cls=ok?'imp-input correct':'imp-input wrong';
+    return `<div class="imp-slot">
+      <span class="imp-slot-num">${i+1}</span>
+      <input class="${cls}" value="${ok?displayVal:displayVal+' → '+riven.pos[i]}" disabled>
+    </div>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML=`
+    ${modCardHTML(riven,3,false,false)}
+    <div class="imp-area">
+      <div class="imp-slots">${slots}</div>
+      <div class="feedback ${allCorrect?'correct':'wrong'}" style="margin-bottom:1rem;">${allCorrect?'✓ All stats decoded':'✗ Incorrect'}</div>
+      <button class="next-btn" onclick="advanceRound()">${isLast?'See Results':'Next Mod'} →</button>
+    </div>
+    <button class="back-btn" onclick="goBack()">← Back to Menu</button>`;
+}
+
+function advanceRound(){
+  if(G.round>=9){ showResults(); return; }
+  G.round++; G.qIdx=0;
+  updateGameStats(); renderProgress(); renderRound();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════════════
+function showResults(){
+  const correct=G.results.filter(Boolean).length;
+  const isPerfect=correct===10;
+  const avgTime=G.totalTime>0?(G.totalTime/30).toFixed(1):'—';
+
+  // Update records
+  REC.gamesPlayed++;
+  const isNewBest=G.score>(REC.bestScore||0);
+  if(isNewBest) REC.bestScore=G.score;
+
+  const modeKey=G.isDaily?'impossible':G.mode;
+  if(G.score>(REC.bestByMode[modeKey]||0)) REC.bestByMode[modeKey]=G.score;
+
+  if(G.isDaily){
+    REC.dailyDate=todayStr();
+    REC.dailyScore=G.score;
+  }
+
+  if(isPerfect){
+    REC.perfectRuns++;
+    const today=todayStr();
+    if(REC.lastPerfectDate!==today){
+      const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+      REC.dailyStreak=REC.lastPerfectDate===yesterday?REC.dailyStreak+1:1;
+      REC.lastPerfectDate=today;
+    }
+  }
+  saveRec();
+
+  const GRADES=[
+    {min:10,label:"Void-Touched",  sub:"Flawless. The Lotus is proud."},
+    {min:8, label:"Tenno-Trained", sub:"Solid knowledge. Keep rolling."},
+    {min:5, label:"Initiate",      sub:"A start. The Void demands more."},
+    {min:0, label:"Unvaulted",     sub:"Cephalon Simaris is disappointed."},
+  ];
+  const grade=GRADES.find(g=>correct>=g.min);
+  const catRows=G.pool.map((r,i)=>{const ok=G.results[i];return`<div class="cat-row"><div class="cat-dot ${ok?'c':'w'}"></div><div class="cat-weapon">${r.weapon}</div><div class="cat-result ${ok?'c':'w'}">${ok?'Correct':'Wrong'}</div></div>`;}).join('');
+
+  const timeCell=G.totalTime>0?`<div class="breakdown-cell time-cell"><span class="bval">${avgTime}s</span>Avg Speed</div>`:`<div class="breakdown-cell"><span class="bval">—</span>Speed</div>`;
+
+  document.getElementById('main').innerHTML=`
+    <div class="results-screen">
+      <div class="results-title">Mission Complete</div>
+      <div class="results-score">${G.score}</div>
+      <div class="results-sub">${correct} / 10 mods decoded</div>
+      <div class="results-grade">${grade.label} — ${grade.sub}</div>
+      ${isNewBest?'<div class="new-record gold">⬆ New Personal Best!</div>':''}
+      ${isPerfect?'<div class="new-record green">✦ Perfect Run!</div>':''}
+      <div class="results-breakdown">
+        <div class="breakdown-cell correct-cell"><span class="bval">${correct}</span>Correct</div>
+        <div class="breakdown-cell wrong-cell"><span class="bval">${10-correct}</span>Wrong</div>
+        <div class="breakdown-cell score-cell"><span class="bval">${G.score}</span>Score</div>
+        <div class="breakdown-cell streak-cell"><span class="bval">${G.bestStreak}</span>Streak</div>
+        ${timeCell}
+      </div>
+      <div class="category-results"><div class="cat-title">Round by round</div>${catRows}</div>
+      ${!G.isDaily?`<button class="next-btn" onclick="startGame('${G.mode}')">Play Again ↺</button>`:''}
+      <button class="back-btn" onclick="goBack()" style="margin-top:8px;">← Back to Menu</button>
+    </div>`;
+  document.getElementById('s-round').textContent='10 / 10';
+  renderProgress();
+}
+
+function showDailyLocked(){
+  showPage('page-game');
+  document.getElementById('mode-badge').className='mode-badge daily';
+  document.getElementById('mode-badge').textContent='Daily Challenge';
+  document.getElementById('timer-wrap').style.display='none';
+  document.getElementById('progress-row').innerHTML='';
+  document.getElementById('main').innerHTML=`
+    <div class="daily-locked">
+      <div class="daily-locked-title">Already Completed</div>
+      <div class="daily-locked-score">${REC.dailyScore}</div>
+      <div class="daily-locked-sub">Your score for today. Come back tomorrow!</div>
+      <button class="back-btn" style="margin-top:1.5rem;" onclick="goBack()">← Back to Menu</button>
+    </div>`;
+}
+
+function goBack(){
+  stopTimer();
+  updateStartPage();
+  showPage('page-start');
+}
+
+// ══════════════════════════════════════════════════════════════
+// LEGEND
+// ══════════════════════════════════════════════════════════════
+(function(){
+  const lgp=document.getElementById('lgp');
+  const prefixEntries=Object.entries(PREFIX)
+    .filter(([s])=>s!=="Attack Speed")
+    .map(([s,t])=>{
+      const extra=s==="Fire Rate"?` <span style="color:var(--c-muted);font-size:10px">/ Attack Speed</span>`:'';
+      return `<div class="legend-row"><span class="legend-token">${t}</span><span class="legend-stat">${s}${extra}</span></div>`;
+    }).join('');
+  const suffixEntries=Object.entries(SUFFIX)
+    .filter(([s])=>s!=="Attack Speed")
+    .map(([s,t])=>{
+      const extra=s==="Fire Rate"?` <span style="color:var(--c-muted);font-size:10px">/ Attack Speed</span>`:'';
+      return `<div class="legend-row"><span class="legend-token">${t}</span><span class="legend-stat">${s}${extra}</span></div>`;
+    }).join('');
+  lgp.innerHTML=`
+    <div class="legend-section-title" style="margin-bottom:.5rem">Prefix tokens (stats 1 &amp; 2)</div>
+    <div class="legend-cols">${prefixEntries}</div>
+    <div style="height:1rem"></div>
+    <div class="legend-section-title" style="margin-bottom:.5rem">Suffix tokens (stat 3)</div>
+    <div class="legend-cols">${suffixEntries}</div>`;
+})();
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+updateStartPage();
+showPage('page-start');
+</script>
+</body>
+</html>
+<!DOCTYPE html>
 <html lang="en"><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta charset="UTF-8">
